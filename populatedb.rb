@@ -83,14 +83,14 @@ File.foreach(FILE_SERVER_DATA) do |line|
 				puts "error recovering md5 hash: #{row} was converted to #{filename}|#{filesize}|#{md5hash}"
 				return 100
 			end
-			recoveredfiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
+			remotefiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
 			server_import_bar.increment!
 		end
 	rescue CSV::MalformedCSVError => e
 		md5hash = "CSVERROR"
 		filesize = "0"
 		filename = "CSVERROR"
-		recoveredfiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
+		remotefiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
 		server_import_bar.increment!
 	end
 end
