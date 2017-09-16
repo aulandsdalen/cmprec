@@ -9,7 +9,7 @@ dbname = gets.chomp
 
 DB = Sequel.connect("postgres://#{dbuser}:#{dbpassword}@localhost:5432/#{dbname}")
 
-DB.create_table :synology do
+DB.create_table :remotefiles do
 	primary_key :id
 	String :name
 	Bigint :size
