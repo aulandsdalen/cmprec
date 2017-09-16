@@ -7,12 +7,21 @@
 =end
 require 'csv'
 require 'sequel'
+require 'progress_bar' # why not?
 
 def get_true_data(str)
 	md5hash = str.pop
 	filesize = str.pop
 	truefname = str.join(",")
 	[truefname, filesize, md5hash]
+end
+
+def is_md5?(str)
+	if str.scan(/^[a-f0-9]{32}$/).empty?
+		false
+	else
+		true
+	end
 end
 
 FILE_SERVER_DATA = "server.csv"
@@ -34,9 +43,17 @@ recoveredfiles = DB[:recoveredfiles]
 #	get_true_data(row)
 #end
 
+rlab_length = `wc -l "#{FILE_RLAB_DATA}"`.strip.split(' ')[0].to_i
+rlab_import_bar = ProgressBar.new(rlab_length)
+
 CSV.foreach(FILE_RLAB_DATA) do |row|
 	md5hash = row.pop
 	filesize = row.pop
 	filename = row.join(",")
+	unless is_md5?(md5hash)
+		puts "error recovering md5 hash: #{row} was converted to #{filename}|#{filesize}|#{md5hash}"
+		return 100
+	end
 	recoveredfiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
+	rlab_import_bar.increment!
 end
