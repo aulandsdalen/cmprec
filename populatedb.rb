@@ -47,36 +47,50 @@ rlab_length = `wc -l "#{FILE_RLAB_DATA}"`.strip.split(' ')[0].to_i
 rlab_import_bar = ProgressBar.new(rlab_length, :bar, :counter, :percentage, :elapsed,)
 
 puts "populating rlab table"
-CSV.foreach(FILE_RLAB_DATA) do |row|
-	md5hash = row.pop
-	filesize = row.pop
-	filename = row.join(",")
-	unless is_md5?(md5hash)
-		puts "error recovering md5 hash: #{row} was converted to #{filename}|#{filesize}|#{md5hash}"
-		return 100
+File.foreach(FILE_RLAB_DATA) do |line|
+	begin
+		CSV.parse(line) do |row|
+			md5hash = row.pop
+			filesize = row.pop
+			filename = row.join(",")
+			unless is_md5?(md5hash)
+				puts "error recovering md5 hash: #{row} was converted to #{filename}|#{filesize}|#{md5hash}"
+				return 100
+			end
+			recoveredfiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
+			rlab_import_bar.increment!
+		end
+	rescue CSV::MalformedCSVError => e
+		md5hash = "CSVERROR"
+		filesize = "0"
+		filename = "CSVERROR"
+		recoveredfiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
+		rlab_import_bar.increment!
 	end
-	recoveredfiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
-	rlab_import_bar.increment!
 end
 
 server_length = `wc -l "#{FILE_SERVER_DATA}"`.strip.split(' ')[0].to_i
 server_import_bar = ProgressBar.new(server_length, :bar, :counter, :percentage, :elapsed,)
 
 puts "populating remotefiles table"
-begin
-	CSV.foreach(FILE_SERVER_DATA) do |row|
-	rescue CSV::MalformedCSVError => malformed_csv_e
-		puts "caught CSV::MalformedCSVError, probably nasty filename"
-		row = ["CSVERROR", "0", "d41d8cd98f00b204e9800998ecf8427e"]
-	ensure
-		md5hash = row.pop
-		filesize = row.pop
-		filename = row.join(",")
-		unless is_md5?(md5hash)
-			puts "error recovering md5 hash: #{row} was converted to #{filename}|#{filesize}|#{md5hash}"
-			return 100
+File.foreach(FILE_SERVER_DATA) do |line|
+	begin
+		CSV.parse(line) do |row|
+			md5hash = row.pop
+			filesize = row.pop
+			filename = row.join(",")
+			unless is_md5?(md5hash)
+				puts "error recovering md5 hash: #{row} was converted to #{filename}|#{filesize}|#{md5hash}"
+				return 100
+			end
+			recoveredfiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
+			server_import_bar.increment!
 		end
-		remotefiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
+	rescue CSV::MalformedCSVError => e
+		md5hash = "CSVERROR"
+		filesize = "0"
+		filename = "CSVERROR"
+		recoveredfiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
 		server_import_bar.increment!
 	end
 end
