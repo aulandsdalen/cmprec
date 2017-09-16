@@ -66,6 +66,7 @@ puts "populating remotefiles table"
 begin
 	CSV.foreach(FILE_SERVER_DATA) do |row|
 	rescue CSV::MalformedCSVError => malformed_csv_e
+		puts "caught CSV::MalformedCSVError, probably nasty filename"
 		row = ["CSVERROR", "0", "d41d8cd98f00b204e9800998ecf8427e"]
 	ensure
 		md5hash = row.pop
