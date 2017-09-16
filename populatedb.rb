@@ -63,14 +63,19 @@ server_length = `wc -l "#{FILE_SERVER_DATA}"`.strip.split(' ')[0].to_i
 server_import_bar = ProgressBar.new(server_length, :bar, :counter, :percentage, :elapsed,)
 
 puts "populating remotefiles table"
-CSV.foreach(FILE_SERVER_DATA) do |row|
-	md5hash = row.pop
-	filesize = row.pop
-	filename = row.join(",")
-	unless is_md5?(md5hash)
-		puts "error recovering md5 hash: #{row} was converted to #{filename}|#{filesize}|#{md5hash}"
-		return 100
+begin
+	CSV.foreach(FILE_SERVER_DATA) do |row|
+	rescue CSV::MalformedCSVError => malformed_csv_e
+		row = ["CSVERROR", "0", "d41d8cd98f00b204e9800998ecf8427e"]
+	ensure
+		md5hash = row.pop
+		filesize = row.pop
+		filename = row.join(",")
+		unless is_md5?(md5hash)
+			puts "error recovering md5 hash: #{row} was converted to #{filename}|#{filesize}|#{md5hash}"
+			return 100
+		end
+		remotefiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
+		server_import_bar.increment!
 	end
-	remotefiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
-	server_import_bar.increment!
 end
