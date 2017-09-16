@@ -61,9 +61,10 @@ File.foreach(FILE_RLAB_DATA) do |line|
 			rlab_import_bar.increment!
 		end
 	rescue CSV::MalformedCSVError => e
-		md5hash = "CSVERROR"
-		filesize = "0"
-		filename = "CSVERROR"
+		manualrow = line.split(",")
+		md5hash = manualrow.pop
+		filesize = manualrow.pop
+		filename = manualrow.join(",")
 		recoveredfiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
 		rlab_import_bar.increment!
 	end
@@ -87,9 +88,11 @@ File.foreach(FILE_SERVER_DATA) do |line|
 			server_import_bar.increment!
 		end
 	rescue CSV::MalformedCSVError => e
-		md5hash = "CSVERROR"
-		filesize = "0"
-		filename = "CSVERROR"
+		# defaulting to manual csv parsing
+		manualrow = line.split(",")
+		md5hash = manualrow.pop
+		filesize = manualrow.pop
+		filename = manualrow.join(",")
 		remotefiles.insert(:name => filename, :size => filesize, :md5 => md5hash)
 		server_import_bar.increment!
 	end
