@@ -14,12 +14,12 @@ DB = Sequel.connect("postgres://#{dbuser}:#{dbpassword}@localhost:5432/#{dbname}
 remotefiles = DB[:remotefiles]
 recoveredfiles = DB[:recoveredfiles]
 
-remotefiles_arr = remotefiles.all
+#remotefiles_arr = remotefiles.all
 recoveredfiles_arr = recoveredfiles.all
 
 # rd = RDispatch.new
 recoveredfiles_arr.each do |file|
-	remote_sibling = remotefiles.where(:name => file[:name])
+	remote_sibling = remotefiles.where(:name => file[:name]).first
 	unless remote_sibling.nil?
 		if (remote_sibling[:md5] == file[:md5])
 			puts "#{remote_sibling[:name]} = #{file[:name]}"
