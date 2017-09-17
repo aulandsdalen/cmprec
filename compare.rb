@@ -19,14 +19,18 @@ recoveredfiles_arr = recoveredfiles.all
 
 # rd = RDispatch.new
 recoveredfiles_arr.each do |file|
-	remote_sibling = remotefiles.where(:name => file[:name]).first
-	unless remote_sibling.nil?
-		if (remote_sibling[:md5] == file[:md5])
-			puts "#{remote_sibling[:name]} = #{file[:name]}"
-		else
-			puts "different hash for #{remote_sibling[:name]}"
-		end
+	if file[:name].include?("@Syno")
+		puts "#{file[:name]} is synology resource, skipping..."
 	else
-		puts "#{file[:name]} was not found on server"
+		remote_sibling = remotefiles.where(:name => file[:name]).first
+		unless remote_sibling.nil?
+			if (remote_sibling[:md5] == file[:md5])
+				puts "#{remote_sibling[:name]} = #{file[:name]}"
+			else
+				puts "different hash for #{remote_sibling[:name]}"
+			end
+		else
+			puts "#{file[:name]} was not found on server"
+		end
 	end
 end
