@@ -1,6 +1,7 @@
 require 'csv'
 require 'sequel'
 require 'rdispatch'
+require 'progress_bar'
 
 print "postgres user? "
 dbuser = gets.chomp
@@ -15,7 +16,10 @@ remotefiles = DB[:remotefiles]
 recoveredfiles = DB[:recoveredfiles]
 
 #remotefiles_arr = remotefiles.all
+puts "Loading list of recoverd files..."
 recoveredfiles_arr = recoveredfiles.all
+
+cmpbar = ProgressBar.new(recoveredfiles_arr.length, :bar, :counter, :percentage, :elapsed,)
 
 # rd = RDispatch.new
 equal_files = []
@@ -24,6 +28,7 @@ notfound_files = []
 logfile = []
 
 recoveredfiles_arr.each do |file|
+	cmpbar.increment!
 	if file[:name].include?("@Syno")
 		logfile << "#{file[:name]} is synology resource, skipping..."
 	else
