@@ -72,6 +72,7 @@ end
 
 rd = RDispatch.new
 rd.create_task(method(:find_similar), files_array)
+rd.run!
 
 open('nodup.csv', 'a') {|f|
 	no_dup_files.each do |record|
