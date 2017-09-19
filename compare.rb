@@ -18,19 +18,51 @@ recoveredfiles = DB[:recoveredfiles]
 recoveredfiles_arr = recoveredfiles.all
 
 # rd = RDispatch.new
+equal_files = []
+unequal_files = []
+notfound_files = []
+logfile = []
+
 recoveredfiles_arr.each do |file|
 	if file[:name].include?("@Syno")
-		puts "#{file[:name]} is synology resource, skipping..."
+		logfile << "#{file[:name]} is synology resource, skipping..."
 	else
 		remote_sibling = remotefiles.where(:name => file[:name]).first
 		unless remote_sibling.nil?
 			if (remote_sibling[:md5] == file[:md5])
-				puts "#{remote_sibling[:name]} = #{file[:name]}"
+				logfile << "#{remote_sibling[:name]} = #{file[:name]}"
+				equal_files << "#{remote_sibling[:name]};#{remote_sibling[:size]};#{remote_sibling[:md5]}"
 			else
-				puts "different hash for #{remote_sibling[:name]}"
+				logfile << "different hash for #{remote_sibling[:name]}"
+				unequal_files << "#{remote_sibling[:name]};#{remote_sibling[:size]};#{remote_sibling[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
 			end
 		else
-			puts "#{file[:name]} was not found on server"
+			logfile << "#{file[:name]} was not found on server"
+			notfound_files << "#{file[:name]};#{file[:size]};#{file[:md5]}"
 		end
 	end
 end
+
+open('equal_files_recoveredfiles.csv', 'a') {|f|
+	equal_files.each do |record|
+		f.puts record
+	end
+}
+
+open('unequal_files_recoveredfiles.csv', 'a') {|f|
+	unequal_files.each do |record|
+		f.puts record
+	end
+}
+
+open('notfound_files_recoveredfiles.csv', 'a') {|f|
+	notfound_files.each do |record|
+		f.puts record
+	end
+}
+
+open('log_recoveredfiles.txt', 'a') {|f|
+	logfile.each do |log|
+		f.puts log
+	end
+}
