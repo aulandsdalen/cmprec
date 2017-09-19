@@ -69,4 +69,3 @@ open('log_dup.txt', 'a') {|f|
 		f.puts logrecord
 	end
 }
-=end
