@@ -69,10 +69,35 @@ files_array.each do |file|
 	dupbar.increment!
 end
 =end
+threads = []
+split_data = files_array.each_slice((data.size/8.0).round).to_a
 
-rd = RDispatch.new
-rd.create_task(method(:find_similar), files_array)
-rd.run!
+split_data.each do |ds|
+	threads << Thread.new do
+		ds.each do |file|
+			fullname = file[:name]
+			shortname = "%" + fullname.split("/").last
+			similar_files = remotefiles.where(Sequel.like(:name, shortname)).all
+				if similar_files.empty?
+					log << "no duplicates for #{file[:name]}"
+					no_dup_files << "#{file[:name]};#{file[:size]};#{file[:md5]}"
+				else
+					similar_files.each do |sf|
+						if sf[:md5] == file[:md5]
+							log << "found duplicate for #{file[:name]}"
+							equal_files << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
+						else
+							log << "found duplicate for #{file[:name]}, different md5"
+							unequal_files << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
+						end
+				end
+			end
+		end
+	end
+end
+
+threads.each(&:join)
+
 
 open('nodup.csv', 'a') {|f|
 	no_dup_files.each do |record|
