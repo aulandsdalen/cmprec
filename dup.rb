@@ -70,9 +70,10 @@ files_array.each do |file|
 end
 =end
 threads = []
-split_data = files_array.each_slice((data.size/8.0).round).to_a
+split_data = files_array.each_slice((split_data.size/8.0).round).to_a
 
 split_data.each do |ds|
+	puts "new thread"
 	threads << Thread.new do
 		ds.each do |file|
 			fullname = file[:name]
@@ -92,6 +93,7 @@ split_data.each do |ds|
 						end
 				end
 			end
+			dupbar.increment!
 		end
 	end
 end
