@@ -22,7 +22,7 @@ log = []
 puts "Loading list of files..."
 files_array = remotefiles.all
 
-dupbar = ProgressBar.new(files_array.length)
+dupbar = ProgressBar.new(files_array.length, :bar, :counter, :percentage, :elapsed,)
 
 files_array.each do |file|
 	fullname = file[:name]
@@ -31,32 +31,20 @@ files_array.each do |file|
 	if similar_files.empty?
 	#	log << "no duplicates for #{file[:name]}"
 	#	no_dup_files << "#{file[:name]};#{file[:size]};#{file[:md5]}"
-	open ('log_dup.txt', 'a') {|f|
-		f.puts << "no duplicates for #{file[:name]}"
-	}
-	open ('nodup.csv', 'a') {|f|
-		f.puts << "#{file[:name]};#{file[:size]};#{file[:md5]}"
-	}
+		File.write('log.txt', "no duplicates for #{file[:name]}\n", File.size("log.txt"), mode: 'a')
+		File.write('nodup.csv', "#{file[:name]};#{file[:size]};#{file[:md5]}\n", File.size('nodup.csv'), mode: 'a')
 	else
 		similar_files.each do |sf|
 			if sf[:md5] == file[:md5]
-				open('log_dup.txt', 'a') {|f|
-					f.puts << "found duplicate for #{file[:name]}"
-				}
-				open('equal_files.csv', 'a') {|f|
-					f.puts << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
-				}
-				#log << "found duplicate for #{file[:name]}"
-				#equal_files << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
+			#	log << "found duplicate for #{file[:name]}"
+			#	equal_files << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
+				File.write('log.txt', "found duplicate for #{file[:name]}\n", File.size("log.txt"), mode: 'a')
+				File.write("dup.csv", "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}\n", File.size("dup.csv"), mode: 'a')
 			else
-				open('log_dup.txt', 'a') {|f|
-					f.puts << "found different md5 for #{file[:name]}"
-				}
-				open('unequal_files.csv', 'a') {|f|
-					f.puts << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
-				}
-				#log << "found duplicate for #{file[:name]}, different md5"
-				#unequal_files << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
+			#	log << "found duplicate for #{file[:name]}, different md5"
+			#	unequal_files << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
+				File.write('log.txt', "found duplicate for #{file[:name]}, different md5\n", File.size("log.txt"), mode: 'a')
+				File.write("diff.csv", "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}\n", File.size("diff.csv"), mode: 'a')
 			end
 		end
 	end
