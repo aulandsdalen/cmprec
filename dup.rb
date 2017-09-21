@@ -22,29 +22,47 @@ log = []
 puts "Loading list of files..."
 files_array = remotefiles.all
 
-dupbar = ProgressBar.new(files_array.length, :bar, :counter, :percentage, :elapsed,)
+dupbar = ProgressBar.new(files_array.length)
 
 files_array.each do |file|
 	fullname = file[:name]
 	shortname = "%" + fullname.split("/").last
 	similar_files = remotefiles.where(Sequel.like(:name, shortname)).all
 	if similar_files.empty?
-		log << "no duplicates for #{file[:name]}"
-		no_dup_files << "#{file[:name]};#{file[:size]};#{file[:md5]}"
+	#	log << "no duplicates for #{file[:name]}"
+	#	no_dup_files << "#{file[:name]};#{file[:size]};#{file[:md5]}"
+	open ('log_dup.txt', 'a') {|f|
+		f.puts << "no duplicates for #{file[:name]}"
+	}
+	open ('nodup.csv', 'a') {|f|
+		f.puts << "#{file[:name]};#{file[:size]};#{file[:md5]}"
+	}
 	else
 		similar_files.each do |sf|
 			if sf[:md5] == file[:md5]
-				log << "found duplicate for #{file[:name]}"
-				equal_files << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
+				open('log_dup.txt', 'a') {|f|
+					f.puts << "found duplicate for #{file[:name]}"
+				}
+				open('equal_files.csv', 'a') {|f|
+					f.puts << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
+				}
+				#log << "found duplicate for #{file[:name]}"
+				#equal_files << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
 			else
-				log << "found duplicate for #{file[:name]}, different md5"
-				unequal_files << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
+				open('log_dup.txt', 'a') {|f|
+					f.puts << "found different md5 for #{file[:name]}"
+				}
+				open('unequal_files.csv', 'a') {|f|
+					f.puts << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
+				}
+				#log << "found duplicate for #{file[:name]}, different md5"
+				#unequal_files << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
 			end
 		end
 	end
 	dupbar.increment!
 end
-
+=begin
 open('nodup.csv', 'a') {|f|
 	no_dup_files.each do |record|
 		f.puts record
@@ -69,3 +87,4 @@ open('log_dup.txt', 'a') {|f|
 		f.puts logrecord
 	end
 }
+=end
