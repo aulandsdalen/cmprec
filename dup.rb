@@ -3,6 +3,11 @@ require 'sequel'
 require 'rdispatch'
 require 'progress_bar'
 
+LOGFILE = "compare.log"
+DIFFCSV = "diff.csv"
+DUPCSV = "dup.csv"
+NODUPCSV = "nodup.csv"
+
 print "postgres user? "
 dbuser = gets.chomp
 print "postgres password? "
@@ -14,65 +19,42 @@ DB = Sequel.connect("postgres://#{dbuser}:#{dbpassword}@localhost:5432/#{dbname}
 
 remotefiles = DB[:remotefiles]
 
-equal_files = []
-unequal_files = []
-no_dup_files = []
-log = []
 
 puts "Loading list of files..."
 files_array = remotefiles.all
 
 dupbar = ProgressBar.new(files_array.length, :bar, :counter, :percentage, :elapsed,)
+files_processed = 0
 
 files_array.each do |file|
 	fullname = file[:name]
 	shortname = "%" + fullname.split("/").last
 	similar_files = remotefiles.where(Sequel.like(:name, shortname)).all
-	if similar_files.empty?
-	#	log << "no duplicates for #{file[:name]}"
-	#	no_dup_files << "#{file[:name]};#{file[:size]};#{file[:md5]}"
-		File.write('log.txt', "no duplicates for #{file[:name]}\n", File.size("log.txt"), mode: 'a')
-		File.write('nodup.csv', "#{file[:name]};#{file[:size]};#{file[:md5]}\n", File.size('nodup.csv'), mode: 'a')
+	files_processed += 1
+	if similar_files.count == 1
+		# no files found
+		IO.write(LOGFILE, "#{files_processed}: no duplicates for #{file[:name]}\n", mode: 'a')
+		IO.write(NODUPCSV, "#{file[:name]};#{file[:size]};#{file[:md5]}\n")
 	else
 		similar_files.each do |sf|
 			if sf[:md5] == file[:md5]
-			#	log << "found duplicate for #{file[:name]}"
-			#	equal_files << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
-				File.write('log.txt', "found duplicate for #{file[:name]}\n", File.size("log.txt"), mode: 'a')
-				File.write("dup.csv", "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}\n", File.size("dup.csv"), mode: 'a')
+				if sf[:name] == file[:name]
+					# #3
+					IO.write(LOGFILE, "#{files_processed}: no duplicates for file #{file[:name]}\n", mode: 'a')
+				else
+					# #4
+					IO.write(LOGFILE, "#{files_processed}: duplicate found for #{file[:name]} at #{sf[:name]}\n")
+					IO.write(DUPCSV, "#{file[:name]};#{file[:size]};#{file[:md5]};#{sf[:name]};#{sf[:size]};#{sf[:md5]}\n")
+				end
+			elsif sf[:name] == file[:name]
+				# WTF??
+				IO.write(LOGFILE, "#{files_processed}: WTF?? #{file[:name]}\n")
 			else
-			#	log << "found duplicate for #{file[:name]}, different md5"
-			#	unequal_files << "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}"
-				File.write('log.txt', "found duplicate for #{file[:name]}, different md5\n", File.size("log.txt"), mode: 'a')
-				File.write("diff.csv", "#{sf[:name]};#{sf[:size]};#{sf[:md5]};#{file[:name]};#{file[:size]};#{file[:md5]}\n", File.size("diff.csv"), mode: 'a')
-			end
+				# #2
+				IO.write(LOGFILE, "#{files_processed}: duplicate with different md5 found for #{file[:md5]}\n")
+				IO.write(DIFFCSV, "#{file[:name]};#{file[:size]};#{file[:md5]};#{sf[:name]};#{sf[:size]};#{sf[:md5]}\n")
+			end	
 		end
 	end
 	dupbar.increment!
 end
-=begin
-open('nodup.csv', 'a') {|f|
-	no_dup_files.each do |record|
-		f.puts record
-	end
-}
-
-open('equal_files.csv', 'a') {|f|
-	equal_files.each do |record|
-		f.puts record
-	end
-}
-
-open('unequal_files.csv', 'a') {|f|
-	unequal_files.each do |record|
-		f.puts record
-	end
-}
-
-
-open('log_dup.txt', 'a') {|f|
-	log.each do |logrecord|
-		f.puts logrecord
-	end
-}
-=end
