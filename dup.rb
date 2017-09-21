@@ -40,8 +40,9 @@ files_array.each do |file|
 			if sf[:md5] == file[:md5]
 				if sf[:name] == file[:name]
 					# #3
-					IO.write(LOGFILE, "BRANCH3 #{files_processed}: no duplicates for file #{file[:name]}\n", mode: 'a')
-					IO.write(NODUPCSV, "#{file[:name]};#{file[:size]};#{file[:md5]}\n", mode: 'a')
+					IO.write(LOGFILE, "already processed #{file[:name]}, skipping...\n", mode: 'a')
+				#	IO.write(NODUPCSV, "#{file[:name]};#{file[:size]};#{file[:md5]}\n", mode: 'a')
+				# 	skip
 				else
 					# #4
 					IO.write(LOGFILE, "BRANCH4 #{files_processed}: duplicate found for #{file[:name]} at #{sf[:name]}\n", mode: 'a')
