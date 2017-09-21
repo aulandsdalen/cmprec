@@ -41,6 +41,7 @@ files_array.each do |file|
 				if sf[:name] == file[:name]
 					# #3
 					IO.write(LOGFILE, "#{files_processed}: no duplicates for file #{file[:name]}\n", mode: 'a')
+					IO.write(NODUPCSV, "#{file[:name]};#{file[:size]};#{file[:md5]}\n", mode: 'a')
 				else
 					# #4
 					IO.write(LOGFILE, "#{files_processed}: duplicate found for #{file[:name]} at #{sf[:name]}\n", mode: 'a')
@@ -51,7 +52,7 @@ files_array.each do |file|
 				IO.write(LOGFILE, "#{files_processed}: WTF?? #{file[:name]}\n", mode: 'a')
 			else
 				# #2
-				IO.write(LOGFILE, "#{files_processed}: duplicate with different md5 found for #{file[:md5]}\n", mode: 'a')
+				IO.write(LOGFILE, "#{files_processed}: duplicate with different md5 found for #{file[:name]}\n", mode: 'a')
 				IO.write(DIFFCSV, "#{file[:name]};#{file[:size]};#{file[:md5]};#{sf[:name]};#{sf[:size]};#{sf[:md5]}\n", mode: 'a')
 			end	
 		end
